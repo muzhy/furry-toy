@@ -1,5 +1,9 @@
 #include <iostream>
 
+#include "TestDemo.hpp"
+
+using namespace std;
+
 int main(int, char**) {
-    std::cout << "Hello, world!\n";
+    cout << leetCode::GetLibName() << endl;
 }
