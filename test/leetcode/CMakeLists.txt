@@ -10,7 +10,7 @@ file(GLOB leetcode_src
 add_executable(leetcode_test ${leetcode_src})
 
 target_link_libraries(leetcode_test
-    leetcode
+    leetcode 
     ${GTEST_BOTH_LIBRARIES}
     pthread
 )

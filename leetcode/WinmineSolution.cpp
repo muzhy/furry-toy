@@ -4,118 +4,100 @@
 
 namespace leetCode
 {
-    using namespace std;    
+    using namespace std;
 
-    void WinmineSolution::printBoard(const vector<vector<char>>& board)
+    const int WinmineSolution::m_sDir[8][2] = {
+        {-1, -1}, {-1, 0}, {-1, 1}, 
+        {0, -1}, {0, 1}, 
+        {1, -1}, {1, 0}, {1, 1}};
+
+    void WinmineSolution::printBoard()
     {
-        for(size_t i = 0; i < board.size(); i++)
+        for (size_t i = 0; i < m_board.size(); i++)
         {
-            cout << "[";
-            for(size_t j = 0; j < board[i].size(); j++)
+            for (size_t j = 0; j < m_board[i].size(); j++)
             {
-                cout << board[i][j] << ", ";
+                cout << m_board[i][j] << " ";
             }
-            cout << "]" << endl;
+            cout << endl;
         }
+        cout << endl;
     }
 
-    vector<vector<char>> WinmineSolution::updateBoard(
-        vector<vector<char>> &board, vector<int> &click)
+    bool WinmineSolution::click(const BoardPosType pos)
     {
-        switch (board[click[0]][click[1]])
+        updateBoard(pos);
+        return m_board[pos[0]][pos[1]] != 'X';
+    }
+
+    void WinmineSolution::updateBoard(const vector<int> &click)
+    {
+        switch (m_board[click[0]][click[1]])
         {
         case 'M':
-            board[click[0]][click[1]] = 'X';
+            m_board[click[0]][click[1]] = 'X';
             break;
         case 'E':
-            handleSafeClick(board, click);
+            uncover(click);
             break;
         default:
             break;
         }
-        return board;
     }
 
-    int WinmineSolution::findBoomCount(
-        const std::vector<std::vector<char>>& board,
-        const std::vector<int>& click)
+    void WinmineSolution::uncover(const BoardPosType& pos)
     {
-        int boomCount = 0;
-        for(int i = click[0] - 1; i <= click[0] + 1; i++)
-        {
-            if(i < 0 || i >= board.size())
-            {
-                continue;
-            }
-            for(int j = click[1] - 1; j <= click[1] + 1; j++)
-            {
-                if(j < 0 || j >= board[i].size())
-                {
-                    continue;
-                }
-                if(i == click[0] && j == click[0])
-                {
-                    continue;
-                }
-
-                if(board[i][j] == 'M')
-                {
-                    boomCount++;
-                }
-            }
-        }
-        return boomCount;
-    }
-
-    void WinmineSolution::handleSafeClick(std::vector<std::vector<char>>& board,
-        const std::vector<int>& click)
-    {
-        if(board[click[0]][click[1]] != 'E')
+        if(m_board[pos[0]][pos[1]] != 'E')
         {
             return ;
         }
-        int boomCount = findBoomCount(board, click);
-        // 周围没有地雷
-        if(boomCount == 0)
+        int nearBoomCount = findNearBoomCount(pos);
+        if(nearBoomCount == 0)
         {
-            board[click[0]][click[1]] = 'B';
- 
-            for(int i = click[0] - 1; i <= click[0] + 1; i++)
+            m_board[pos[0]][pos[1]] = 'B';
+            // printBoard();
+            for (size_t i = 0; i < 8; i++)
             {
-                if(i < 0 || i >= board.size())
+                int row = pos[0] + m_sDir[i][0];
+                int col = pos[1] + m_sDir[i][1];
+                if (row < 0 || row >= m_board.size() || 
+                    col < 0 || col >= m_board[row].size())
                 {
+                    // 超出棋盘
                     continue;
                 }
-                for(int j = click[1] - 1; j <= click[1] + 1; j++)
-                {
-                    if(j < 0 || j >= board[i].size())
-                    {
-                        continue;
-                    }
-                    if(i == click[0] && j == click[0])
-                    {
-                        continue;
-                    }
-                    vector<int> pos;
-                    pos.push_back(i);
-                    pos.push_back(j);
-                    int nearBoomCount = findBoomCount(board, pos);
-                    if(nearBoomCount == 0)
-                    {
-                        // 递归暴露周围的地块 
-                        handleSafeClick(board, pos);
-                    }
-                    else
-                    {
-                        board[i][j] = '0' + boomCount;
-                    }
-                }
-            }          
+                BoardPosType newPos = {row, col};
+                uncover(newPos);
+                // printBoard();
+            }
         }
         else
         {
-            board[click[0]][click[1]] = '0' + boomCount;
+            m_board[pos[0]][pos[1]] = nearBoomCount + '0';
         }
     }
-    
+
+    int WinmineSolution::findNearBoomCount(const BoardPosType &pos)
+    {
+        int nearBoomCount = 0;
+
+        for (size_t i = 0; i < 8; i++)
+        {
+            int row = pos[0] + m_sDir[i][0];
+            int col = pos[1] + m_sDir[i][1];
+            if (row < 0 || row >= m_board.size() || 
+                col < 0 || col >= m_board[row].size())
+            {
+                // 超出棋盘
+                continue;
+            }
+            if(m_board[row][col] == 'M')
+            {
+                nearBoomCount++;
+            }
+        }
+
+        return nearBoomCount;
+    }
+
 } // namespace leetCode
