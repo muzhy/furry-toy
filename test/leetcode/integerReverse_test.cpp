@@ -1,12 +1,34 @@
 #include <gtest/gtest.h>
 
-TEST(FirstTest, BasicAssertions)
+#include "Number.hpp"
+
+TEST(NumberReverseTest, NormalNumber)
 {
-    EXPECT_EQ(7 * 6, 43);
+    EXPECT_EQ(321, leetCode::reverse(123));
 }
 
-TEST(SecondTest, BasicAssertions)
+TEST(NumberReverseTest, NegativeNumber)
 {
-    EXPECT_EQ(7 * 6, 42);
+    EXPECT_EQ(-321, leetCode::reverse(-123));
+}
+
+TEST(NumberReverseTest, ContentZeroNumber)
+{
+    EXPECT_EQ(21, leetCode::reverse(120));
+}
+
+TEST(NumberReverseTest, ZeroNumber)
+{
+    EXPECT_EQ(0, leetCode::reverse(0));
+}
+
+TEST(NumberReverseTest, PositiveOverflow)
+{
+    EXPECT_EQ(0, leetCode::reverse(1534236469));
+}
+
+TEST(NumberReverseTest, NegativeOverflow)
+{
+    EXPECT_EQ(0, leetCode::reverse(-2147483648));
 }
 
