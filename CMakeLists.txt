@@ -7,8 +7,10 @@ set(CMAKE_CXX_STANDARD 17)
 aux_source_directory(. DIRSRCS)
 # 包含头文件目录
 include_directories("${PROJECT_SOURCE_DIR}/leetcode")
+
 # 子文件夹
 add_subdirectory(leetcode)
+add_subdirectory(test)
 
 include(CTest)
 enable_testing()
