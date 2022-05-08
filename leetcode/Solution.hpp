@@ -1,3 +1,6 @@
+#ifndef __LEET_CODE_SOLUTION_H__
+#define __LEET_CODE_SOLUTION_H__
+
 #include <string>
 
 namespace leetCode
@@ -24,3 +27,5 @@ namespace leetCode
         virtual std::string run() = 0;
     };
 } // namespace leetCode
+
+#endif

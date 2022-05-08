@@ -1,3 +1,6 @@
+#ifndef __LEET_CODE_WINMINE_SOLUTION_H__
+#define __LEET_CODE_WINMINE_SOLUTION_H__
+
 #include "Solution.hpp"
 
 #include <vector>
@@ -44,3 +47,5 @@ namespace leetCode
         BoardType m_board;
     };
 } // namespace leetCode
+
+#endif

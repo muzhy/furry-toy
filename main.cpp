@@ -1,30 +1,20 @@
 #include <iostream>
+#include <algorithm>
 
-#include "WinmineSolution.hpp"
+#include "Number.hpp"
 
 using namespace std;
 using namespace leetCode;
 
 int main(int, char**) {
 
-    cout << "Hello World" << endl;
-
-    ;
-
-    WinmineSolution::BoardType board = 
+    auto res = numSameConsecDiff(2, 2);
+    sort(res.begin(), res.end());
+    for(size_t i = 0; i < res.size(); i++)
     {
-        {'E','E','E','E','E'},
-        {'E','E','M','E','E'},
-        {'E','E','E','E','E'},
-        {'E','E','E','E','E'}
-    };
-    WinmineSolution::BoardPosType clickPos = {3, 0};
-
-    WinmineSolution winmine(board);
-    winmine.printBoard();
-
-    winmine.click(clickPos);    
-    winmine.printBoard();
+        cout << res[i] << " ";
+    }
+    cout << endl;
 
     return 0;
 }
