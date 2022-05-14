@@ -61,7 +61,7 @@ namespace furry_toy::ds
         // 获取数组的长度
         size_t len()
         {
-            return m_endIndex - m_endIndex;
+            return m_endIndex - m_beginIndex;
         }
         // 获取数组的容量
         size_t cap()

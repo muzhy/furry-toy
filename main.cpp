@@ -10,6 +10,7 @@ using namespace leetCode;
 
 int main(int, char**) {
     ds::slice<int> slice{1, 2, 3, 4};
+    cout << slice.len() << endl;
     cout << slice.toString() << endl;
     cout << slice[1] << endl;
     auto slice2(slice);

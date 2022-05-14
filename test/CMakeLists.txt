@@ -10,5 +10,6 @@ target_link_libraries(helloTest
 )
 
 add_subdirectory(leetcode)
+add_subdirectory(dataStruct)
 
-gtest_discover_tests(helloTest)
+gtest_discover_tests(helloTest dataStruct_test)
