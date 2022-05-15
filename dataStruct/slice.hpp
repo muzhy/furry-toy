@@ -5,6 +5,9 @@
 #include <sstream>
 #include <assert.h>
 
+#ifndef __FURRY_TOY_SLICE_H__
+#define __FURRY_TOY_SLICE_H__
+
 namespace furry_toy
 {
     /*********************************************************************
@@ -157,3 +160,5 @@ namespace furry_toy
     };
 
 }
+
+#endif
