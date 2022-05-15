@@ -34,11 +34,22 @@ namespace furry_toy::ds
         {
         }
         /****************************************************************
-         * 使用数组初始化切片
-         * beginIndex   默认值为0， 表示从数组的第一个元素开始
-         * endIndex     默认值为0， 表示到数组的最后一个元素结束
+         * 使用数组初始化切片, 必须指定
          * **************************************************************/
-        explicit slice(T data[], size_t beginIndex = 0, size_t endIndex = 0);
+        explicit slice(T data[], size_t beginIndex, size_t len)
+            : m_beginIndex(0), m_endIndex(len)
+        {            
+            if(len == 0)
+            {
+                return ;
+            }
+            m_data = std::make_shared<std::vector<T>>();
+            m_data->reserve(len);
+            for(size_t i = 0; i < len; i++)
+            {
+                m_data->push_back(data[i + beginIndex]);
+            }
+        }
 
         ~slice()
         {
@@ -63,6 +74,11 @@ namespace furry_toy::ds
         {
             return m_endIndex - m_beginIndex;
         }
+        size_t size()
+        {
+            return len();
+        }
+
         // 获取数组的容量
         size_t cap()
         {
