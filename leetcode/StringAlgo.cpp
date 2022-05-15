@@ -66,8 +66,7 @@ namespace leetCode
             {
                 s = s.substr(minCharPos, s.size() - minCharPos)
                     + s.substr(0, minCharPos);
-            }
-            
+            }            
         }
         else
         {

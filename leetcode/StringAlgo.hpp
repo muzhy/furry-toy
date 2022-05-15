@@ -5,7 +5,6 @@
 
 namespace leetCode
 {
-
     int findMinCharPos(const std::string& str, int begin, int len);
 
     std::string orderlyQueue(std::string s, int k);

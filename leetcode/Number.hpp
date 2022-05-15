@@ -23,7 +23,12 @@ namespace leetCode
      * 请注意，除了 数字 0 本身之外，答案中的每个数字都 不能 
      * 有一个前导零，所以是无效的；但 0 是有效的。
      * ******************************************************************/
-    std::vector<int> numSameConsecDiff(int n, int k);    
+    std::vector<int> numSameConsecDiff(int n, int k);   
+
+    /************************************************************
+     * 给定一个正整数 n，返回 连续正整数满足所有数字之和为 n 的组数 
+     * *********************************************************/
+    int consecutiveNumbersSum(int n); 
 } // namespace leetCode
 
 #endif

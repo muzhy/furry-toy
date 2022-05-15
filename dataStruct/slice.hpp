@@ -3,6 +3,7 @@
 #include <initializer_list>
 #include <string>
 #include <sstream>
+#include <assert.h>
 
 namespace furry_toy
 {
@@ -16,33 +17,47 @@ namespace furry_toy
     public:
         /***************************************************************
          * 允许创建空的切片
-         * 允许通过其他切片来创建新的切片
-         * 允许使用initializer_list创建新切片
          * ************************************************************/
         explicit slice()
             : m_data(nullptr), m_beginIndex(0), m_endIndex(0)
         {
         }
+
         explicit slice(const slice<T> &otherslice)
             : m_data(otherslice.m_data), m_beginIndex(otherslice.m_beginIndex),
               m_endIndex(otherslice.m_endIndex)
         {
         }
+
+        explicit slice(slice<T> &otherSlice, size_t beginIndex, size_t endIndex)
+            : m_data(otherSlice.m_data), 
+            m_beginIndex(otherSlice.m_beginIndex + beginIndex),
+            m_endIndex(otherSlice.m_endIndex + endIndex)
+        {
+            assert(m_data->size() >= m_endIndex);
+            assert(m_data->size() > m_beginIndex);
+            assert(m_beginIndex >= 0);
+        }
+
         explicit slice(std::initializer_list<T> list)
             : m_data(std::make_shared<std::vector<T>>(list)),
               m_beginIndex(0), m_endIndex(list.size())
         {
         }
+
         /**********************************************************
          * 根据长度及初值初始化切片
+         * 会向切片中插入len个值为value的数据
          * ********************************************************/
         explicit slice(size_t len, T value)
             : m_data(std::make_shared<std::vector<T>>(len, value)),
               m_beginIndex(0), m_endIndex(len)
         {
         }
+
         /****************************************************************
-         * 使用数组初始化切片, 必须指定
+         * 使用数组初始化切片, 必须指定起始位置及长度
+         * 调用者需要保证数据的可用
          * **************************************************************/
         explicit slice(T data[], size_t beginIndex, size_t len)
             : m_beginIndex(0), m_endIndex(len)
@@ -67,14 +82,23 @@ namespace furry_toy
          * 切片截取，由于[]运算符无法接受两个参数，故使用()替代
          * end 为0时表示到最后一个元素
          * ******************************************************/
-        slice<T> operator()(size_t begin, size_t end);
+        slice<T> operator()(size_t begin, size_t end)
+        {
+            return slice(*this, begin, end);
+        }
+        
+        /**********************************************************
+         * 下标运算，获取切片中的数据
+         * ********************************************************/
         T &operator[](size_t index)
         {
-            return (*m_data)[index];
+            assert(index + m_beginIndex < m_endIndex);
+            return (*m_data)[index + m_beginIndex];
         }
         const T &operator[](size_t index) const
         {
-            return (*m_data)[index];
+            assert(index + m_beginIndex < m_endIndex);
+            return (*m_data)[index + m_beginIndex];
         }
 
         // 获取数组的长度
