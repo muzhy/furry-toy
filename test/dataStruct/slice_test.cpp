@@ -2,7 +2,7 @@
 
 #include "slice.hpp"
 
-using namespace furry_toy::ds;
+using namespace furry_toy;
 
 TEST(SliceTest, CreateEmptySlice)
 {

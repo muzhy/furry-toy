@@ -4,7 +4,7 @@
 #include <string>
 #include <sstream>
 
-namespace furry_toy::ds
+namespace furry_toy
 {
     /*********************************************************************
      * slice 模仿Go中的切片实现的切片
@@ -25,7 +25,7 @@ namespace furry_toy::ds
         }
         explicit slice(const slice<T> &otherslice)
             : m_data(otherslice.m_data), m_beginIndex(otherslice.m_beginIndex),
-            m_endIndex(otherslice.m_endIndex)
+              m_endIndex(otherslice.m_endIndex)
         {
         }
         explicit slice(std::initializer_list<T> list)
@@ -33,19 +33,27 @@ namespace furry_toy::ds
               m_beginIndex(0), m_endIndex(list.size())
         {
         }
+        /**********************************************************
+         * 根据长度及初值初始化切片
+         * ********************************************************/
+        explicit slice(size_t len, T value)
+            : m_data(std::make_shared<std::vector<T>>(len, value)),
+              m_beginIndex(0), m_endIndex(len)
+        {
+        }
         /****************************************************************
          * 使用数组初始化切片, 必须指定
          * **************************************************************/
         explicit slice(T data[], size_t beginIndex, size_t len)
             : m_beginIndex(0), m_endIndex(len)
-        {            
-            if(len == 0)
+        {
+            if (len == 0)
             {
-                return ;
+                return;
             }
             m_data = std::make_shared<std::vector<T>>();
             m_data->reserve(len);
-            for(size_t i = 0; i < len; i++)
+            for (size_t i = 0; i < len; i++)
             {
                 m_data->push_back(data[i + beginIndex]);
             }
@@ -90,10 +98,10 @@ namespace furry_toy::ds
             return m_data == nullptr || m_beginIndex == m_endIndex;
         }
 
-        slice<T>& append(std::initializer_list<T> list)
+        slice<T> &append(std::initializer_list<T> list)
         {
             m_data->reserve(m_data->size() + list.size());
-            for(auto it = list.begin(); it != list.end(); it++)
+            for (auto it = list.begin(); it != list.end(); it++)
             {
                 m_data->push_back(*it);
             }
@@ -123,8 +131,5 @@ namespace furry_toy::ds
         size_t m_beginIndex;
         size_t m_endIndex;
     };
-
-    template <typename T>
-    slice<T> makeSlice(size_t len, size_t cap = 0);
 
 }
