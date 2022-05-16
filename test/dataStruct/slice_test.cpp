@@ -4,22 +4,48 @@
 
 using namespace furry_toy;
 
-TEST(SliceTest, CreateEmptySlice)
+class SliceTest : public ::testing::Test
 {
-    slice<int> s;
-    EXPECT_EQ(s.isEmpty(), true);
-    // EXPECT_EQ(s.len(), 0);
-    // EXPECT_EQ(s.cap(), 0);
-    // EXPECT_EQ(s.toString(), "[]");
+protected:
+    void SetUp() override{
+
+    }
+
+    slice<int> emptySlice;
+    slice<int> initLenValSlice = slice<int>(5, 0);
+};
+
+TEST_F(SliceTest, EmptySliceEmptyTest)
+{
+    EXPECT_EQ(emptySlice.isEmpty(), true);
+} 
+
+TEST_F(SliceTest, InitLenValSliceEmptyTest)
+{
+    EXPECT_EQ(initLenValSlice.isEmpty(), false);
 }
 
-TEST(SliceTest, InitializeListIinit)
+TEST_F(SliceTest, EmptySliceLenTest)
 {
-    slice<int> s{1, 2, 3};
-    EXPECT_EQ(s.len(), 3);
-    // for(size_t i = 0; i < 3; i++)
-    // {
-    //     EXPECT_EQ(s[i], i + 1);
-    // }
-    // EXPECT_EQ(s.isEmpty(), false);
+    EXPECT_EQ(emptySlice.len(), 0);
+}
+
+TEST_F(SliceTest, InitLenValSliceLenTest)
+{
+    EXPECT_EQ(initLenValSlice.len(), 5);
+}
+
+TEST_F(SliceTest, EmptySliceCapTest)
+{
+    EXPECT_EQ(emptySlice.cap(), 0);
+}
+
+TEST_F(SliceTest, EmptySliceStringTest)
+{
+    EXPECT_EQ(emptySlice.toString(), "[]");
+}
+
+TEST_F(SliceTest, InitLenValSliceStringTest)
+{
+    EXPECT_EQ(initLenValSlice.toString(), "[0, 0, 0, 0, 0]");
 }

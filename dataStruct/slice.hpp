@@ -117,6 +117,10 @@ namespace furry_toy
         // 获取数组的容量
         size_t cap()
         {
+            if(m_data == nullptr)
+            {
+                return 0;
+            }
             return m_data->capacity() - m_beginIndex;
         }
         // 是否为空
@@ -146,7 +150,7 @@ namespace furry_toy
             ss << "[";
             for (size_t i = m_beginIndex; i < m_endIndex - 1; i++)
             {
-                ss << (*m_data)[i] << ",";
+                ss << (*m_data)[i] << ", ";
             }
             ss << (*m_data)[m_endIndex - 1];
             ss << "]";
