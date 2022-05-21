@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <assert.h>
+#include <iostream>
 
 #ifndef __FURRY_TOY_SLICE_H__
 #define __FURRY_TOY_SLICE_H__
@@ -42,7 +43,7 @@ namespace furry_toy
             assert(m_beginIndex >= 0);
         }
 
-        explicit slice(std::initializer_list<T> list)
+        slice(std::initializer_list<T> list)
             : m_data(std::make_shared<std::vector<T>>(list)),
               m_beginIndex(0), m_endIndex(list.size())
         {
@@ -90,6 +91,8 @@ namespace furry_toy
             return slice(*this, begin, end);
         }
         
+        
+
         /**********************************************************
          * 下标运算，获取切片中的数据
          * ********************************************************/
@@ -124,7 +127,7 @@ namespace furry_toy
             return m_data->capacity() - m_beginIndex;
         }
         // 是否为空
-        bool isEmpty()
+        bool isEmpty() const
         {
             return m_data == nullptr || m_beginIndex == m_endIndex;
         }
@@ -140,7 +143,7 @@ namespace furry_toy
             return *this;
         }
 
-        std::string toString()
+        std::string toString() const
         {
             if (isEmpty())
             {
@@ -163,6 +166,12 @@ namespace furry_toy
         size_t m_endIndex;
     };
 
+    template<typename T>
+    std::ostream& operator<<(std::ostream& out, const slice<T>& slice)
+    {
+        out << slice.toString();
+        return out;
+    }
 }
 
 #endif

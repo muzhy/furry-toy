@@ -49,3 +49,10 @@ TEST_F(SliceTest, InitLenValSliceStringTest)
 {
     EXPECT_EQ(initLenValSlice.toString(), "[0, 0, 0, 0, 0]");
 }
+
+TEST_F(SliceTest, InitLenValSliceOutStreamTest)
+{
+    std::stringstream ss;
+    ss << initLenValSlice;
+    EXPECT_EQ(ss.str(), "[0, 0, 0, 0, 0]");
+}
