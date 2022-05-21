@@ -14,6 +14,9 @@ namespace furry_toy
     /*********************************************************************
      * slice 模仿Go中的切片实现的切片
      * 创建： 可以创建空的切片，也可以使用makeSlice()函数创建切片并指定切片长度
+     * slice目标在于尽可能提供与Go中的slice相同的功能，由于C++本身语法的限制
+     * 部分功能如[:]无法直接通过重载[]实现，改为重载()实现，
+     * 但总体上应该能与Go中的slice表现出一致的行为
      * ******************************************************************/
     template <typename T>
     class slice
@@ -23,29 +26,29 @@ namespace furry_toy
          * 允许创建空的切片
          * ************************************************************/
         explicit slice()
-            : m_data(nullptr), m_beginIndex(0), m_endIndex(0)
+            : m_data(nullptr), m_beginIndex(0), m_len(0)
         {
         }
 
         explicit slice(const slice<T> &otherslice)
             : m_data(otherslice.m_data), m_beginIndex(otherslice.m_beginIndex),
-              m_endIndex(otherslice.m_endIndex)
+              m_len(otherslice.m_len)
         {
         }
 
         explicit slice(slice<T> &otherSlice, size_t beginIndex, size_t endIndex)
             : m_data(otherSlice.m_data), 
             m_beginIndex(otherSlice.m_beginIndex + beginIndex),
-            m_endIndex(otherSlice.m_endIndex + endIndex)
+            m_len(endIndex - beginIndex)
         {
-            assert(m_data->size() >= m_endIndex);
-            assert(m_data->size() > m_beginIndex);
             assert(m_beginIndex >= 0);
+            assert(m_data->size() > m_beginIndex);
+            assert(m_data->size() >= (beginIndex + m_len));
         }
 
         slice(std::initializer_list<T> list)
             : m_data(std::make_shared<std::vector<T>>(list)),
-              m_beginIndex(0), m_endIndex(list.size())
+              m_beginIndex(0), m_len(list.size())
         {
         }
 
@@ -55,7 +58,7 @@ namespace furry_toy
          * ********************************************************/
         explicit slice(size_t len, T value)
             : m_data(std::make_shared<std::vector<T>>(len, value)),
-              m_beginIndex(0), m_endIndex(len)
+              m_beginIndex(0), m_len(len)
         {
         }
 
@@ -64,7 +67,7 @@ namespace furry_toy
          * 调用者需要保证数据的可用
          * **************************************************************/
         explicit slice(T data[], size_t beginIndex, size_t len)
-            : m_beginIndex(0), m_endIndex(len)
+            : m_beginIndex(0), m_len(len)
         {
             if (len == 0)
             {
@@ -72,10 +75,7 @@ namespace furry_toy
             }
             m_data = std::make_shared<std::vector<T>>();
             m_data->reserve(len);
-            for (size_t i = 0; i < len; i++)
-            {
-                m_data->push_back(data[i + beginIndex]);
-            }
+            m_data->insert(m_data->end(), std::begin(data), std::end(data));
         }
 
         ~slice()
@@ -98,19 +98,19 @@ namespace furry_toy
          * ********************************************************/
         T &operator[](size_t index)
         {
-            assert(index + m_beginIndex < m_endIndex);
+            assert(index < m_len);
             return (*m_data)[index + m_beginIndex];
         }
         const T &operator[](size_t index) const
         {
-            assert(index + m_beginIndex < m_endIndex);
+            assert(index < m_len);
             return (*m_data)[index + m_beginIndex];
         }
 
         // 获取数组的长度
         size_t len()
         {
-            return m_endIndex - m_beginIndex;
+            return m_len;
         }
         size_t size()
         {
@@ -129,17 +129,26 @@ namespace furry_toy
         // 是否为空
         bool isEmpty() const
         {
-            return m_data == nullptr || m_beginIndex == m_endIndex;
+            return m_data == nullptr || m_len == 0;
         }
 
         slice<T> &append(std::initializer_list<T> list)
         {
-            m_data->reserve(m_data->size() + list.size());
-            for (auto it = list.begin(); it != list.end(); it++)
+            if(m_beginIndex == 0 && len == m_data.size())
             {
-                m_data->push_back(*it);
+                // 位于vector末尾，不需要拷贝数据，直接再末尾添加数据
+                m_data->reserve(m_data->size() + list.size());
+                m_data->insert(m_data->end(), list.begin(), list.end());
+                m_len = m_data->size();
             }
-            m_endIndex += list.size();
+            else
+            {
+                auto tempData = std::make_shared<T>(std::vector<T>());
+                tempData->reserve(m_data->size() + list.size());
+                tempData->insert(tempData->end(), m_data->begin(), m_data->end());
+                tempData->insert(tempData->end(), list.begin(), list.end());
+            }
+            
             return *this;
         }
 
@@ -151,11 +160,11 @@ namespace furry_toy
             }
             std::stringstream ss;
             ss << "[";
-            for (size_t i = m_beginIndex; i < m_endIndex - 1; i++)
+            for (size_t i = 0; i < m_len - 1; i++)
             {
-                ss << (*m_data)[i] << ", ";
+                ss << (*m_data)[i + m_beginIndex] << ", ";
             }
-            ss << (*m_data)[m_endIndex - 1];
+            ss << (*m_data)[m_beginIndex + m_len - 1];
             ss << "]";
             return ss.str();
         }
@@ -163,7 +172,7 @@ namespace furry_toy
     private:
         std::shared_ptr<std::vector<T>> m_data;
         size_t m_beginIndex;
-        size_t m_endIndex;
+        size_t m_len;
     };
 
     template<typename T>
@@ -172,6 +181,8 @@ namespace furry_toy
         out << slice.toString();
         return out;
     }
+
+    
 }
 
 #endif
