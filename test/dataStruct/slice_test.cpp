@@ -56,3 +56,27 @@ TEST_F(SliceTest, InitLenValSliceOutStreamTest)
     ss << initLenValSlice;
     EXPECT_EQ(ss.str(), "[0, 0, 0, 0, 0]");
 }
+
+TEST_F(SliceTest, EndAppendTest)
+{
+    auto s2 = initLenValSlice.append({1});
+    EXPECT_EQ("[0, 0, 0, 0, 0, 1]", s2.toString());
+}
+
+TEST_F(SliceTest, EndAppendPreTest)
+{
+    initLenValSlice.append({1});
+    EXPECT_EQ("[0, 0, 0, 0, 0, 1]", initLenValSlice.toString());
+}
+
+TEST_F(SliceTest, AppendFunPreTest)
+{
+    append(initLenValSlice, {1});
+    EXPECT_EQ("[0, 0, 0, 0, 0]", initLenValSlice.toString());
+}
+
+TEST_F(SliceTest, AppendFunAfterTest)
+{
+    auto s1 = append(initLenValSlice, {1});
+    EXPECT_EQ("[0, 0, 0, 0, 0, 1]", s1.toString());
+}

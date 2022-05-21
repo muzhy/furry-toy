@@ -30,10 +30,18 @@ namespace furry_toy
         {
         }
 
-        explicit slice(const slice<T> &otherslice)
+        slice(const slice<T> &otherslice)
             : m_data(otherslice.m_data), m_beginIndex(otherslice.m_beginIndex),
               m_len(otherslice.m_len)
         {
+        }
+
+        void operator=(slice<T>& otherSlice)
+        {
+            // 自赋值情况可以安全的处理
+            m_len = otherSlice.m_len;
+            m_beginIndex = otherSlice.m_beginIndex;
+            m_data = otherSlice.m_data;
         }
 
         explicit slice(slice<T> &otherSlice, size_t beginIndex, size_t endIndex)
@@ -132,9 +140,9 @@ namespace furry_toy
             return m_data == nullptr || m_len == 0;
         }
 
-        slice<T> &append(std::initializer_list<T> list)
+        slice<T> append(std::initializer_list<T> list)
         {
-            if(m_beginIndex == 0 && len == m_data.size())
+            if(m_beginIndex == 0 && m_len == m_data->size())
             {
                 // 位于vector末尾，不需要拷贝数据，直接再末尾添加数据
                 m_data->reserve(m_data->size() + list.size());
@@ -143,13 +151,13 @@ namespace furry_toy
             }
             else
             {
-                auto tempData = std::make_shared<T>(std::vector<T>());
+                auto tempData = std::make_shared<std::vector<T>>();
                 tempData->reserve(m_data->size() + list.size());
                 tempData->insert(tempData->end(), m_data->begin(), m_data->end());
                 tempData->insert(tempData->end(), list.begin(), list.end());
             }
             
-            return *this;
+            return slice<T>(*this);
         }
 
         std::string toString() const
@@ -182,7 +190,13 @@ namespace furry_toy
         return out;
     }
 
-    
+    template<typename T>
+    slice<T> append(const slice<T>& srcSlice, std::initializer_list<T> list)
+    {
+        slice<T> resSlice(srcSlice);
+        resSlice.append(list);
+        return resSlice;
+    }
 }
 
 #endif
