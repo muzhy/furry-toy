@@ -11,7 +11,7 @@ include_directories("${PROJECT_SOURCE_DIR}/dataStruct")
 
 # 子文件夹
 add_subdirectory(leetcode)
-add_subdirectory(test)
+# add_subdirectory(test)
 
 include(CTest)
 enable_testing()
