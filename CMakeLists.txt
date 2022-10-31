@@ -8,10 +8,11 @@ aux_source_directory(. DIRSRCS)
 # 包含头文件目录
 include_directories("${PROJECT_SOURCE_DIR}/leetcode")
 include_directories("${PROJECT_SOURCE_DIR}/dataStruct")
+include_directories("${PROJECT_SOURCE_DIR}/error")
 
 # 子文件夹
 add_subdirectory(leetcode)
-# add_subdirectory(test)
+add_subdirectory(test)
 
 include(CTest)
 enable_testing()

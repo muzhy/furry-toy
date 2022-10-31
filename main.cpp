@@ -6,6 +6,13 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 
+#include "error.h"
+
+furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::string& err)
+{
+    return furry_toy::SUCCESS;
+}
+
 int main(int, char**) {
 
     std::cout << "start server ..." << std::endl;
