@@ -54,6 +54,39 @@ namespace furry_toy
             m_data.pop();
             return res;
         }
+        // 等到数据，超时还没有数据时返回
+        bool try_pop(T&value, unsigned int timeout)
+        {
+            std::unique_lock<std::mutex> lock(m_dataMut);
+            if(m_dataCond.wait_for(lock, std::chrono::milliseconds(timeout), [this]{
+                return m_data.empty() == false;
+            }))
+            {
+                value = m_data.front();
+                m_data.pop();
+            }
+            else
+            {
+                return false;
+            }
+        }
+        std::shared_ptr<T> try_pop(unsigned int timeout)
+        {
+            std::unique_lock<std::mutex> lock(m_dataMut);
+            if(m_dataCond.wait_for(lock, std::chrono::milliseconds(timeout), [this]{
+                return m_data.empty() == false;
+            }))
+            {
+                std::shared_ptr<T> res(std::make_shared<T>(m_data.front()));
+                m_data.pop();
+                return res;
+            }
+            else
+            {
+                return nullptr;
+            }
+        }
+
         //若队列中没有数据，则会阻塞，直到队列中有数据再返回
         void pop(T& value)
         {
