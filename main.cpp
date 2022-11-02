@@ -5,17 +5,12 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
+#include <stdio.h>
 
-#include "error.h"
+#include "error/error.h"
 
 furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::string& err)
-{
-    return furry_toy::SUCCESS;
-}
-
-int main(int, char**) {
-
-    std::cout << "start server ..." << std::endl;
+{   
     /************************************************************************
      * int  socket(int protofamily, int type, int protocol);    //返回sockfd
      * @param protofamily 协议域，常用的协议域有：AF_INET(IPV4)、AF_INET6(IPV6)、
@@ -33,26 +28,27 @@ int main(int, char**) {
     if(listen_fd == -1)
     {
         std::cerr << "Error: init socket failed! err[" << errno << "]: " << strerror(errno) << std::endl;
-        return -1;
+        return furry_toy::NET_SOCKET_INIT_ERR;
     }
 
     struct sockaddr_in addr;
+    // IPv4
     addr.sin_family = AF_INET;
     // 转换为网络字节序
-    addr.sin_port = htons(8080);
+    addr.sin_port = htons(port);
+    // Address to accept any incoming messages. 
     addr.sin_addr.s_addr = INADDR_ANY;
 
     if(bind(listen_fd, (struct sockaddr*)&addr, sizeof(addr)) == -1)
     {
         std::cerr << "Error: bind socket failed! err[" << errno << "]" << strerror(errno) << std::endl;
-        return -1;
+        return furry_toy::NET_SOCKET_BIND_ERR;
     }
 
-    int max_wait_socket = 10;
     if(listen(listen_fd, max_wait_socket) == -1)
     {
         std::cerr << "Error: listen failed! err[" << errno << "]" << strerror(errno) << std::endl;
-        return -1;
+        return furry_toy::NET_SOCKET_LISTEN_ERR;
     }
 
     int conn = 0;
@@ -106,5 +102,102 @@ int main(int, char**) {
     
     close(listen_fd);
 
+    return furry_toy::SUCCESS;
+}
+
+int main(int, char**) {
+    std::cout << "start server ..." << std::endl;
+    #ifdef OS_LINUX
+        std::cout << "current in linux system" << std::endl;
+    #elif OS_WINDOWS
+        std::cout << "current in windows" << std::endl;
+    #endif
+    
+    std::string err;
+    auto errCode =  startTcpServer(8080, 10, err);
+    if(errCode != furry_toy::SUCCESS)
+    {
+        std::cerr << err << std::endl;
+    }
+
     return 0;
 }
+
+/************************************************************
+ * 监控文件夹
+#include <iostream>
+
+#include "trecallagentapp.h"
+
+#include <sys/inotify.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <map>
+
+// MAIN_APP(TRecallAgent);
+
+int main(int argc, char *argv[]) {
+    int fd = inotify_init();
+    if(fd < 0)
+    {
+        std::cout << "init inotify failed!" << std::endl;
+        return -1;
+    }
+    std::string rootFile = "/home/zhychen/tmp";
+    std::map<int, std::string> watchToFileName;
+    int watch_d = inotify_add_watch(fd, rootFile.c_str(), IN_CLOSE_WRITE | IN_CREATE | IN_DELETE);
+    watchToFileName.insert(std::make_pair(watch_d, rootFile));
+    
+    char buf[1024];
+    while(true)
+    {
+        int len = read(fd, buf, sizeof(buf) - 1);
+        struct inotify_event *event = NULL;
+        int nread = 0;
+        while(len > 0)
+        {
+            event = (struct inotify_event *)&buf[nread];
+            if(event->mask & IN_CLOSE_WRITE)
+            {
+                std::cout << event->name << " in close write" << std::endl;
+            }
+            else if(event->mask & IN_CREATE)
+            {
+                std::cout << event->name << " in create" << std::endl;
+                struct stat s_buf;
+                auto it = watchToFileName.find(event->wd);
+                assert(it != watchToFileName.end());
+                std::string parentFileName = it->second;
+                std::string filename = parentFileName + "/" + event->name;
+                std::cout << "full file path " << filename << std::endl;
+                stat(filename.c_str(), &s_buf);
+                if(S_ISDIR(s_buf.st_mode))
+                {
+                    std::cout << "create new sub dir : " << event->name << std::endl;
+                    int wd = inotify_add_watch(fd, filename.c_str(), IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
+                    watchToFileName.insert(std::make_pair(wd, filename));
+                }
+                else
+                {
+                    std::cout << "create file : " << event->name << std::endl;
+                }
+            }
+            else if(event->mask & IN_DELETE)
+            {
+                std::cout << event->name << " in delete" << std::endl;
+            }
+            else if(event->mask & (IN_DELETE_SELF | IN_MOVE_SELF | IN_IGNORED))
+            {
+                std::cout <<event->name << " deleted move of ignored" << std::endl;
+                watchToFileName.erase(event->wd);
+                inotify_rm_watch(fd, event->wd);
+            }
+            len = len - sizeof(struct inotify_event) - event->len;
+            nread = nread + sizeof(struct inotify_event) + event->len;
+        }
+    }
+    close(fd);
+    // std::auto_ptr<NAMESPACE_NAME::TRecallAgentApp> _au(new NAMESPACE_NAME::TRecallAgentApp);
+    // return _au->run(argc, argv).errorNo();
+}
+*********************************************************************************/
