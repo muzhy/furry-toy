@@ -85,7 +85,7 @@ furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::stri
             }
             else
             {
-                if(strcmp(buf, "quit\n") == 0 || strcmp(buf, "quit\r\n") == 0)
+                if(strcmp(buf, "quit") == 0 || strcmp(buf, "quit\n") == 0 || strcmp(buf, "quit\r\n") == 0)
                 {
                     std::cout << "close connect, " << " client_ip " << client_ip << ":" << ntohs(client_addr.sin_port) << std::endl;
                     break;
@@ -96,7 +96,7 @@ furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::stri
                 }
             }
         }
-
+        shutdown(conn, SHUT_RDWR);
         close(conn);        
     }
     
@@ -106,19 +106,37 @@ furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::stri
 }
 
 int main(int, char**) {
-    std::cout << "start server ..." << std::endl;
-    #ifdef OS_LINUX
-        std::cout << "current in linux system" << std::endl;
-    #elif OS_WINDOWS
-        std::cout << "current in windows" << std::endl;
-    #endif
-    
-    std::string err;
-    auto errCode =  startTcpServer(8080, 10, err);
-    if(errCode != furry_toy::SUCCESS)
+    // std::string err;
+    // startTcpServer(8080, 10, err);
+    // return 0;
+    std::cout << "start tcp client ..." << std::endl;
+
+    int client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    struct sockaddr_in addr;
+    // IPv4
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(8080);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    if(connect(client_socket, (struct sockaddr*)&addr, sizeof(addr)) != 0)
     {
-        std::cerr << err << std::endl;
+        std::cerr << "connet server failed!" << std::endl;
+        return -1;
     }
+
+    std::string str;
+    while(true)
+    {
+        std::cin >> str;
+
+        int len = send(client_socket, str.c_str(), str.size(), 0);
+        if(str == "quit")
+        {
+            break;
+        }
+    }
+
+    close(client_socket);
 
     return 0;
 }
