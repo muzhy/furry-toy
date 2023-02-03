@@ -30,9 +30,9 @@ namespace furry_toy
                 return "Unknow err!";
             case NET_SOCKET_INIT_ERR:
                 return "Init socket failed!";
-            case:
+            case NET_SOCKET_BIND_ERR:
                 return "Socket bind to port failed!";
-            case:
+            case NET_SOCKET_LISTEN_ERR:
                 return "Socket listen failed!";
             default:
                 return "Undefine error code!";
