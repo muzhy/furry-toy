@@ -1,19 +1,20 @@
-/********************************************************
- * TSQueue thread safe queue 线程安全队列 
- * *****************************************************/
-
 #include <queue>
 #include <mutex>
 #include <condition_variable>
 #include <memory>
+
+#include "base.h"
 
 #ifndef __FURRY_TOY_THREAD_SAFE_QUEUE_H__
 #define __FURRY_TOY_THREAD_SAFE_QUEUE_H__
 
 namespace furry_toy
 {
+    /********************************************************
+    * TSQueue thread safe queue 线程安全队列 
+    * *****************************************************/
     template <typename T>
-    class TSQueue
+    class TSQueue : public UnAssignable
     {
     public:
         TSQueue() : m_data(), m_dataMut(), m_dataCond() {}
@@ -30,9 +31,7 @@ namespace furry_toy
             }
             m_dataCond.notify_all();
         }
-        // 禁止赋值操作
-        TSQueue& operator=(const TSQueue&) = delete;
-
+        
         void push(const T& value)
         {
             std::lock_guard<std::mutex> lock(m_dataMut);
