@@ -84,7 +84,7 @@ namespace furry_toy
                 return m_data.empty() == false || m_destory;
             }))
             {
-                popPtr();
+                return popPtr();
             }
             else
             {

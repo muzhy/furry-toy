@@ -31,6 +31,7 @@ bool ThreadPool::isNeedExit()
 bool ThreadPool::addJob(Job&& job)
 {
     m_jobQueue.push(std::move(job));
+    return false;
 }
 
 std::shared_ptr<ThreadPool::Job> ThreadPool::getJob(int nTimeout)
@@ -66,6 +67,7 @@ bool ThreadPool::start()
     
     m_bIsStarted = true;
     // TODO 创建线程并启动
+    return true;
 }
     
 }
