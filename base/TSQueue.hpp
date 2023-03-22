@@ -17,7 +17,7 @@ namespace furry_toy
     class TSQueue : public UnAssignable
     {
     public:
-        TSQueue() : m_data(), m_dataMut(), m_dataCond() {}
+        TSQueue() : m_data(), m_dataMut(), m_dataCond(), m_destory(false) {}
         TSQueue(const TSQueue& otherQueue) 
         {
             std::lock_guard<std::mutex> lock(otherQueue.m_dataMut);
@@ -50,7 +50,7 @@ namespace furry_toy
         bool try_pop(T& value)
         {
             std::lock_guard<std::mutex> lock(m_dataMut);
-            return popValue();
+            return popValue(value);
         }  
         
         std::shared_ptr<T> try_pop()
