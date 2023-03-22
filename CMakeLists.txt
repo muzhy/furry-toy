@@ -19,6 +19,7 @@ include(CTest)
 enable_testing()
 
 add_executable(furry_toy main.cpp)
+add_executable(tcp_client tcp_client.cpp)
 
 # 添加链接库
 target_link_libraries(furry_toy base leetcode)
