@@ -8,6 +8,8 @@
 #include <stdio.h>
 
 #include "error/error.h"
+#include "network/simpleServer.h"
+#include "TSQueue.hpp"
 
 furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::string& err)
 {   
@@ -107,7 +109,8 @@ furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::stri
 
 int main(int, char**) {
     std::string err;
-    startTcpServer(8080, 10, err);
+    // startTcpServer(8080, 10, err);
+    furry_toy::startSimpleTcpServer(8080, 10, err);
     return 0;
 }
 
@@ -121,8 +124,6 @@ int main(int, char**) {
 #include <sys/stat.h>
 #include <stdio.h>
 #include <map>
-
-// MAIN_APP(TRecallAgent);
 
 int main(int argc, char *argv[]) {
     int fd = inotify_init();
