@@ -110,7 +110,8 @@ furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::stri
 int main(int, char**) {
     std::string err;
     // startTcpServer(8080, 10, err);
-    furry_toy::startSimpleTcpServer(8080, 10, err);
+    // furry_toy::startSimpleTcpServer(8080, 10, err);
+    furry_toy::startNoblockingTcpServer(8080, 10, err);
     return 0;
 }
 

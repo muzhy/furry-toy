@@ -1,5 +1,8 @@
 #include "simpleServer.h"
 
+#include <set>
+#include <vector>
+
 namespace furry_toy
 {
 
@@ -112,11 +115,61 @@ ErrorCodeEnum startSimpleTcpServer(int port, int max_wait_socket, std::string& e
 
 ErrorCodeEnum startNoblockingTcpServer(int port, int max_wait_socket, std::string& err)
 {
+    // 创建非阻塞的Socket
     int listen_fd = createAndListenTcpSocket(port, max_wait_socket, SOCK_STREAM | SOCK_NONBLOCK);
     if(listen_fd == -1)
     {
         return furry_toy::NET_SOCKET_INIT_ERR;
     }
+
+    int conn = 0;
+    char client_ip[INET_ADDRSTRLEN] = "";
+    struct sockaddr_in client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+    std::set<int> conn_set;
+    char buf[256];
+
+    while(true)
+    {
+        conn = accept(listen_fd, (struct sockaddr*)&client_addr, &client_addr_len);
+        if(conn != -1)
+        {
+            inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
+            std::cout << "... connect " << client_ip << ":" << ntohs(client_addr.sin_port) << std::endl;
+            conn_set.insert(conn);
+        }
+        std::vector<int> close_conn_vec;
+        
+        for(auto connect : conn_set)
+        {
+            memset(buf, 0, sizeof(buf));
+            int len = recv(connect, buf, sizeof(buf), MSG_DONTWAIT);
+            if(len > 0)
+            {
+                if(strcmp(buf, "quit") == 0 || strcmp(buf, "quit\n") == 0 || strcmp(buf, "quit\r\n") == 0)
+                {
+                   close_conn_vec.push_back(connect);
+                }
+                else
+                {
+                    std::cout << buf << std::endl;
+                }
+            }
+            else if(len == 0)
+            {
+                close_conn_vec.push_back(connect);
+            }
+        }
+
+        for(auto connect : close_conn_vec)
+        {
+            conn_set.erase(connect);
+            shutdown(connect, SHUT_RDWR);
+            close(connect); 
+        }
+    }
+
+    close(listen_fd);
 
     return furry_toy::SUCCESS;
 }
