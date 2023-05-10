@@ -69,6 +69,7 @@ void TStsbTCPServer<typeHandler>::start(int port, int max_wait_socket, int type,
 
     try
     {
+        // 当一个连接的处理抛出异常时，是整个程序应该停止，还是说仅停止改连接的处理，继续处理下一个连接的请求
         while(true)
         {
             std::cout << "listen..." << std::endl;
@@ -87,45 +88,60 @@ void TStsbTCPServer<typeHandler>::start(int port, int max_wait_socket, int type,
             // 此时有两种处理方式
             // 1. 将socket指针传递给handler，由handler内部负责读写socket和处理业务逻辑
             // 2. socket的读写在这里完成, 当socket可读时,读取数据并交给handler处理, 当handler处理完成需要写数据时,返回数据在这里发送数据
-            while (!handler.finished())
-            {
-                memset(buf, 0, sizeof(buf));
-                int len = recv(conn, buf, sizeof(buf), 0);
-                if(len == 0)
+            try{
+                while (!handler.finished())
                 {
-                    handler.onClientClose();
-                    break;
-                }
-                else if(len < 0)
-                {
-                    std::cerr << "socket error : " << len << " client_ip " << client_ip << ":" << ntohs(client_addr.sin_port) << std::endl;
-                    handler.onSocketError();
-                    break;
-                }
-                else{
-                    handler.onReadData(buf, len);
-                }
-
-                while(handler.needSendData())
-                {
-                    memset(sendBuf, 0, sizeof(sendBuf));
-                    int sendDataLen = handler.getSendData(sendBuf, sizeof(sendBuf));
-                    if(sendDataLen > 0)
+                    memset(buf, 0, sizeof(buf));
+                    int len = recv(conn, buf, sizeof(buf), 0);
+                    if(len == 0)
                     {
-                        // TODO 发送数据
-                    }
-                    else
-                    {
+                        handler.onClientClose();
                         break;
                     }
-                }
-            }  
+                    else if(len < 0)
+                    {
+                        std::cerr << "socket error : " << len << " client_ip " << client_ip << ":" << ntohs(client_addr.sin_port) << std::endl;
+                        handler.onSocketError();
+                        break;
+                    }
+                    else{
+                        handler.onReadData(buf, len);
+                    }
 
-            close(conn);           
+                    while(handler.needSendData())
+                    {
+                        memset(sendBuf, 0, sizeof(sendBuf));
+                        int sendDataLen = handler.getSendData(sendBuf, sizeof(sendBuf));
+                        if(sendDataLen > 0)
+                        {
+                            // TODO 发送数据
+                            int sendLen = send(conn, sendBuf, sendDataLen, 0);
+                            if(sendLen == -1)
+                            {
+                                // 发送错误
+                                throw std::system_error(errno, strerrno(errno));
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                } 
+            catch(std::exception& e)
+            {
+                close(conn);
+                conn = 0;  
+                continue;
+            }                     
         }
     }
     catch(std::exception& e)
     {   
+        if(conn > 0)
+        {
+            close(conn);
+        }
         close(listen_fd);
         throw e;
     }
