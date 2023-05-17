@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <system_error>
 #include <errno.h>
-#include <unistd>
+#include <unistd.h>
 
 namespace furry_toy{
 
@@ -17,14 +17,26 @@ template<class typeHandler>
 class TStsbTCPServer
 {
 public:
-    TStsbServer();
-    ~TStsbServer();
+    TStsbTCPServer();
+    ~TStsbTCPServer();
     
     void start(int port, int max_wait_socket, int type, int addrType);
 
 private:
     
 };
+
+template<class typeHandler>
+TStsbTCPServer<typeHandler>::TStsbTCPServer()
+{
+
+}
+
+template<class typeHandler>
+TStsbTCPServer<typeHandler>::~TStsbTCPServer()
+{
+
+}
 
 template<class typeHandler>
 void TStsbTCPServer<typeHandler>::start(int port, int max_wait_socket, int type, int addrType)
@@ -77,21 +89,21 @@ void TStsbTCPServer<typeHandler>::start(int port, int max_wait_socket, int type,
             if(conn < 0)
             {
                 // 以阻塞状态运行，若accept返回-1应该抛出异常
-                throw std::system_error(errno, strerror(errno))
+                throw std::system_error(errno, strerror(errno));
             }
 
             // 不负责业务处理逻辑，仅负责读取和发送数据
-            typeHandler handler;
-            handler.setSockAddr(client_addr);
+            typeHandler handler(client_addr);
             char buf[256];
             char sendBuf[256];
-            // 此时有两种处理方式
-            // 1. 将socket指针传递给handler，由handler内部负责读写socket和处理业务逻辑
+            // 此处可以有两种处理方式
+            // 1. 将socket指针传递给handler，当socket状态更新时，设置状态，通知handler，但是读写还是交由handler处理，似乎这是更通用的做法（要事件驱动时才能实现）
             // 2. socket的读写在这里完成, 当socket可读时,读取数据并交给handler处理, 当handler处理完成需要写数据时,返回数据在这里发送数据
             try{
-                while (!handler.finished())
+                while (!handler.isFinished())
                 {
                     memset(buf, 0, sizeof(buf));
+                    // flag参数可选值详见socket.h的enum MSG_ 的部分
                     int len = recv(conn, buf, sizeof(buf), 0);
                     if(len == 0)
                     {
@@ -114,12 +126,12 @@ void TStsbTCPServer<typeHandler>::start(int port, int max_wait_socket, int type,
                         int sendDataLen = handler.getSendData(sendBuf, sizeof(sendBuf));
                         if(sendDataLen > 0)
                         {
-                            // TODO 发送数据
+                            // 发送数据
                             int sendLen = send(conn, sendBuf, sendDataLen, 0);
                             if(sendLen == -1)
                             {
                                 // 发送错误
-                                throw std::system_error(errno, strerrno(errno));
+                                throw std::system_error(errno, strerror(errno));
                             }
                         }
                         else
@@ -128,6 +140,7 @@ void TStsbTCPServer<typeHandler>::start(int port, int max_wait_socket, int type,
                         }
                     }
                 } 
+            }
             catch(std::exception& e)
             {
                 close(conn);
