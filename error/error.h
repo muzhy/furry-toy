@@ -20,24 +20,24 @@ namespace furry_toy
         NET_SOCKET_LISTEN_ERR   = 0x01000003,
     };
 
-    const char* getMsgFromCode(const ErrorCodeEnum& code)
-    {
-        switch(code)
-        {
-            case SUCCESS:
-                return "Success";
-            case UNKNOW:
-                return "Unknow err!";
-            case NET_SOCKET_INIT_ERR:
-                return "Init socket failed!";
-            case NET_SOCKET_BIND_ERR:
-                return "Socket bind to port failed!";
-            case NET_SOCKET_LISTEN_ERR:
-                return "Socket listen failed!";
-            default:
-                return "Undefine error code!";
-        }
-    }
+    // const char* getMsgFromCode(const ErrorCodeEnum& code)
+    // {
+    //     switch(code)
+    //     {
+    //         case SUCCESS:
+    //             return "Success";
+    //         case UNKNOW:
+    //             return "Unknow err!";
+    //         case NET_SOCKET_INIT_ERR:
+    //             return "Init socket failed!";
+    //         case NET_SOCKET_BIND_ERR:
+    //             return "Socket bind to port failed!";
+    //         case NET_SOCKET_LISTEN_ERR:
+    //             return "Socket listen failed!";
+    //         default:
+    //             return "Undefine error code!";
+    //     }
+    // }
 }
 
 #endif

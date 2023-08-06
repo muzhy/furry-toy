@@ -1,18 +1,13 @@
-#include <iostream>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <stdio.h>
+#include "simpleServer.h"
 
-#include "error/error.h"
-#include "network/simpleServer.h"
-#include "TSQueue.hpp"
+#include <set>
+#include <vector>
 
-furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::string& err)
-{   
+namespace furry_toy
+{
+
+SOCKET_TYPE createAndListenTcpSocket(int port, int max_wait_socket, int type)
+{
     /************************************************************************
      * int  socket(int protofamily, int type, int protocol);    //返回sockfd
      * @param protofamily 协议域，常用的协议域有：AF_INET(IPV4)、AF_INET6(IPV6)、
@@ -26,11 +21,11 @@ furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::stri
      * @return sockfd socket描述符
      * 以下代码创建了一个TCP连接的sockfd
     *************************************************************************/
-    int listen_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int listen_fd = socket(AF_INET, type, IPPROTO_TCP);
     if(listen_fd == -1)
     {
         std::cerr << "Error: init socket failed! err[" << errno << "]: " << strerror(errno) << std::endl;
-        return furry_toy::NET_SOCKET_INIT_ERR;
+        return -1;
     }
 
     struct sockaddr_in addr;
@@ -44,13 +39,24 @@ furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::stri
     if(bind(listen_fd, (struct sockaddr*)&addr, sizeof(addr)) == -1)
     {
         std::cerr << "Error: bind socket failed! err[" << errno << "]" << strerror(errno) << std::endl;
-        return furry_toy::NET_SOCKET_BIND_ERR;
+        return -1;
     }
 
     if(listen(listen_fd, max_wait_socket) == -1)
     {
         std::cerr << "Error: listen failed! err[" << errno << "]" << strerror(errno) << std::endl;
-        return furry_toy::NET_SOCKET_LISTEN_ERR;
+        return -1;
+    }
+
+    return listen_fd;
+}
+
+ErrorCodeEnum startSimpleTcpServer(int port, int max_wait_socket, std::string& err)
+{
+    auto listen_fd = createAndListenTcpSocket(port, max_wait_socket, SOCK_STREAM);
+    if(listen_fd == -1)
+    {
+        return NET_SOCKET_INIT_ERR;
     }
 
     int conn = 0;
@@ -107,87 +113,65 @@ furry_toy::ErrorCodeEnum startTcpServer(int port, int max_wait_socket, std::stri
     return furry_toy::SUCCESS;
 }
 
-int main(int, char**) {
-    std::string err;
-    // startTcpServer(8080, 10, err);
-    // furry_toy::startSimpleTcpServer(8080, 10, err);
-    furry_toy::startNoblockingTcpServer(8080, 10, err);
-    return 0;
-}
-
-/************************************************************
- * 监控文件夹
-#include <iostream>
-
-#include "trecallagentapp.h"
-
-#include <sys/inotify.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <map>
-
-int main(int argc, char *argv[]) {
-    int fd = inotify_init();
-    if(fd < 0)
+ErrorCodeEnum startNoblockingTcpServer(int port, int max_wait_socket, std::string& err)
+{
+    // 创建非阻塞的Socket
+    int listen_fd = createAndListenTcpSocket(port, max_wait_socket, SOCK_STREAM | SOCK_NONBLOCK);
+    if(listen_fd == -1)
     {
-        std::cout << "init inotify failed!" << std::endl;
-        return -1;
+        return furry_toy::NET_SOCKET_INIT_ERR;
     }
-    std::string rootFile = "/home/zhychen/tmp";
-    std::map<int, std::string> watchToFileName;
-    int watch_d = inotify_add_watch(fd, rootFile.c_str(), IN_CLOSE_WRITE | IN_CREATE | IN_DELETE);
-    watchToFileName.insert(std::make_pair(watch_d, rootFile));
-    
-    char buf[1024];
+
+    int conn = 0;
+    char client_ip[INET_ADDRSTRLEN] = "";
+    struct sockaddr_in client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+    std::set<int> conn_set;
+    char buf[256];
+
     while(true)
     {
-        int len = read(fd, buf, sizeof(buf) - 1);
-        struct inotify_event *event = NULL;
-        int nread = 0;
-        while(len > 0)
+        conn = accept(listen_fd, (struct sockaddr*)&client_addr, &client_addr_len);
+        if(conn != -1)
         {
-            event = (struct inotify_event *)&buf[nread];
-            if(event->mask & IN_CLOSE_WRITE)
+            inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
+            std::cout << "... connect " << client_ip << ":" << ntohs(client_addr.sin_port) << std::endl;
+            conn_set.insert(conn);
+        }
+        std::vector<int> close_conn_vec;
+        
+        for(auto connect : conn_set)
+        {
+            memset(buf, 0, sizeof(buf));
+            int len = recv(connect, buf, sizeof(buf), MSG_DONTWAIT);
+            if(len > 0)
             {
-                std::cout << event->name << " in close write" << std::endl;
-            }
-            else if(event->mask & IN_CREATE)
-            {
-                std::cout << event->name << " in create" << std::endl;
-                struct stat s_buf;
-                auto it = watchToFileName.find(event->wd);
-                assert(it != watchToFileName.end());
-                std::string parentFileName = it->second;
-                std::string filename = parentFileName + "/" + event->name;
-                std::cout << "full file path " << filename << std::endl;
-                stat(filename.c_str(), &s_buf);
-                if(S_ISDIR(s_buf.st_mode))
+                if(strcmp(buf, "quit") == 0 || strcmp(buf, "quit\n") == 0 || strcmp(buf, "quit\r\n") == 0)
                 {
-                    std::cout << "create new sub dir : " << event->name << std::endl;
-                    int wd = inotify_add_watch(fd, filename.c_str(), IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
-                    watchToFileName.insert(std::make_pair(wd, filename));
+                   close_conn_vec.push_back(connect);
                 }
                 else
                 {
-                    std::cout << "create file : " << event->name << std::endl;
+                    std::cout << buf << std::endl;
                 }
             }
-            else if(event->mask & IN_DELETE)
+            else if(len == 0)
             {
-                std::cout << event->name << " in delete" << std::endl;
+                close_conn_vec.push_back(connect);
             }
-            else if(event->mask & (IN_DELETE_SELF | IN_MOVE_SELF | IN_IGNORED))
-            {
-                std::cout <<event->name << " deleted move of ignored" << std::endl;
-                watchToFileName.erase(event->wd);
-                inotify_rm_watch(fd, event->wd);
-            }
-            len = len - sizeof(struct inotify_event) - event->len;
-            nread = nread + sizeof(struct inotify_event) + event->len;
+        }
+
+        for(auto connect : close_conn_vec)
+        {
+            conn_set.erase(connect);
+            shutdown(connect, SHUT_RDWR);
+            close(connect); 
         }
     }
-    close(fd);
-    // std::auto_ptr<NAMESPACE_NAME::TRecallAgentApp> _au(new NAMESPACE_NAME::TRecallAgentApp);
-    // return _au->run(argc, argv).errorNo();
+
+    close(listen_fd);
+
+    return furry_toy::SUCCESS;
 }
-*********************************************************************************/
+
+}

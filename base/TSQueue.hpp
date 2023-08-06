@@ -17,6 +17,9 @@ namespace furry_toy
     class TSQueue : public UnAssignable
     {
     public:
+        typedef std::unique_ptr<T> UniPtrType;
+        typedef std::shared_ptr<T> SharedPtrType;
+    public:
         TSQueue() : m_data(), m_dataMut(), m_dataCond(), m_destory(false) {}
         TSQueue(const TSQueue& otherQueue) 
         {
@@ -107,6 +110,13 @@ namespace furry_toy
             m_dataCond.wait(lock, [this]{ return !m_data.empty() || m_destory; });
             return popPtr();
         }
+
+        std::unique_ptr<T> popUniquePtr()
+        {
+            std::unique_lock<std::mutex> lock(m_dataMut);
+            m_dataCond.wait(lock, [this]{ return !m_data.empty() || m_destory; });
+            return popUniPtr();
+        }
         
         bool empty() const
         {
@@ -115,6 +125,17 @@ namespace furry_toy
         }
 
     private:
+        inline std::unique_ptr<T> popUniPtr()
+        {
+            if(m_data.empty())
+            {
+                return nullptr;
+            }
+            auto res = std::make_unique<T>(std::move(m_data.front()));
+            m_data.pop();
+            return res;
+        }
+
         inline std::shared_ptr<T> popPtr()
         {
             if(m_data.empty())
