@@ -1,4 +1,5 @@
 #include <queue>
+#include <stack>
 #include <mutex>
 #include <condition_variable>
 #include <memory>
@@ -10,6 +11,55 @@
 
 namespace furry_toy
 {
+    template <typename T>
+    class TSStack 
+    {
+    private:
+        std::stack<T> m_data;
+        mutable std::mutex m_mut;
+    public:
+        TSStack() : m_data(std::stack<T>()) {}
+        TSStack(const TSStack& other)
+        {
+            std::lock_guard<std::mutex> lock(other.m_mut);
+            m_data = other.m_data;
+        }
+        TSStack& operator=(const TSStack&) = delete;
+        
+        void push(T value)
+        {
+            std::lock_guard<std::mutex> lock(m_mut);
+            m_data.push(value);
+        }
+        void pop(T& value)
+        {
+            std::lock_guard<std::mutex> lock(m_mut);
+            if(m_data.empty())
+            {
+                throw "empty stack";
+            }
+            value = m_data.top();
+            m_data.pop();
+        }
+
+        std::shared_ptr<T> pop()
+        {
+            std::lock_guard<std::mutex> lock(m_mut);
+            if(m_data.empty())
+            {
+                throw "empty stack";
+            }
+            std::shared_ptr<T> const res(std::make_shared<T>(m_data.top()));
+            m_data.pop();
+            return res;
+        }
+        bool empty() const 
+        {
+            std::lock_guard<std::mutex> lock(m_mut);
+            return m_data.empty();
+        }
+    };
+
     /********************************************************
     * TSQueue thread safe queue 线程安全队列 
     * *****************************************************/
@@ -37,15 +87,18 @@ namespace furry_toy
         
         void push(const T& value)
         {
+            std::shared_ptr<T> value_ptr(std::make_shared<T>(std::move(value)));
             std::lock_guard<std::mutex> lock(m_dataMut);
-            m_data.push(value);
+            m_data.push(value_ptr);
             m_dataCond.notify_one();
         }
         // 适用于右值引用的情况
         void push(T&& value)
         {
+            std::shared_ptr<T> value_ptr(std::make_shared<T>(std::move(value)));
             std::lock_guard<std::mutex> lock(m_dataMut);
-            m_data.push(std::move(value));
+            // m_data.push(std::move(value));
+            m_data.push(value_ptr);
             m_dataCond.notify_one();
         }
 
@@ -142,7 +195,7 @@ namespace furry_toy
             {
                 return nullptr;
             }
-            std::shared_ptr<T> res(std::make_shared<T>(std::move(m_data.front())));
+            std::shared_ptr<T> res = m_data.front();
             // auto res = std::move(m_data.front());
             m_data.pop();
             return res;
@@ -154,12 +207,15 @@ namespace furry_toy
             {
                 return false;
             }
-            value = std::move(m_data.front());
+            value = std::move(*m_data.front());
             m_data.pop();
         }
 
     private:
-        std::queue<T> m_data;
+        // std::queue<T> m_data;
+        // 直接存储共享指针，可以在push中加锁之前创建对象，而不需要pop中创建，缩小锁的范围
+        // 同时，避免再pop中创建shared_ptr<T>对象的时候发生异常导致没有线程处理数据。
+        std::queue<std::shared_ptr<T>> m_data;
         mutable std::mutex m_dataMut;
         std::condition_variable m_dataCond;
         bool m_destory;

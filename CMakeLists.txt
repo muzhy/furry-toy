@@ -16,8 +16,9 @@ include_directories("${PROJECT_SOURCE_DIR}/network")
 # 子文件夹
 add_subdirectory(leetcode)
 # add_subdirectory(test)
-add_subdirectory(base)
+# add_subdirectory(base)
 add_subdirectory(network)
+add_subdirectory(concurrent)
 
 include(CTest)
 enable_testing()
@@ -26,7 +27,7 @@ add_executable(furry_toy main.cpp)
 add_executable(tcp_client tcp_client.cpp)
 
 # 添加链接库
-target_link_libraries(furry_toy base leetcode network)
+target_link_libraries(furry_toy leetcode network concurrent)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
