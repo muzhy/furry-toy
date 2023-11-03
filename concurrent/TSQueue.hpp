@@ -209,6 +209,7 @@ namespace furry_toy
             }
             value = std::move(*m_data.front());
             m_data.pop();
+            return true;
         }
 
     private:
