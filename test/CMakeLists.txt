@@ -13,15 +13,9 @@ include_directories("${CMAKE_SOURCE_DIR}/base")
 
 message("-- CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 
-add_executable(helloTest helloTest.cpp)
-
-target_link_libraries(helloTest gtest_main)
 
 add_executable(FileWatcher_test FileWatcher_test.cpp ../base/FileWatcher.cpp)
 
 target_link_libraries(FileWatcher_test gtest_main)
 
-add_subdirectory(leetcode)
-add_subdirectory(dataStruct)
-
-gtest_discover_tests(helloTest dataStruct_test FileWatcher_test)
+gtest_discover_tests(FileWatcher_test)
