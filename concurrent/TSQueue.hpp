@@ -3,6 +3,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <memory>
+#include <optional>
 
 #include "base.h"
 
@@ -11,22 +12,12 @@
 
 namespace furry_toy
 {
-    /********************************************************
-    * TSQueue thread safe queue 线程安全队列 
-    * *****************************************************/
     template <typename T>
     class TSQueue : public UnAssignable
     {
     public:
-        typedef std::unique_ptr<T> UniPtrType;
-        typedef std::shared_ptr<T> SharedPtrType;
-    public:
         TSQueue() : m_data(), m_dataMut(), m_dataCond(), m_destory(false) {}
-        TSQueue(const TSQueue& otherQueue) 
-        {
-            std::lock_guard<std::mutex> lock(otherQueue.m_dataMut);
-            m_data = otherQueue.m_data;
-        }
+        
         ~TSQueue()
         {
             {
@@ -36,90 +27,46 @@ namespace furry_toy
             m_dataCond.notify_all();
         }
         
-        void push(const T& value)
+        template <typename U>
+        void push(U&& value)
         {
-            std::shared_ptr<T> value_ptr(std::make_shared<T>(std::move(value)));
+            std::shared_ptr<T> value_ptr(std::make_shared<T>(std::forward<U>(value)));
             std::lock_guard<std::mutex> lock(m_dataMut);
-            m_data.push(value_ptr);
-            m_dataCond.notify_one();
-        }
-        // 适用于右值引用的情况
-        void push(T&& value)
-        {
-            std::shared_ptr<T> value_ptr(std::make_shared<T>(std::move(value)));
-            std::lock_guard<std::mutex> lock(m_dataMut);
-            // m_data.push(std::move(value));
             m_data.push(value_ptr);
             m_dataCond.notify_one();
         }
 
-        //立即返回，若队列中没有数据，则返回false或nullptr
-        bool try_pop(T& value)
+        //立即返回，若队列中没有数据，则返回std::nullopt
+        std::optional<std::shared_ptr<T>> try_pop()
         {
             std::lock_guard<std::mutex> lock(m_dataMut);
-            return popValue(value);
-        }  
-        
-        std::shared_ptr<T> try_pop()
-        {
-            std::lock_guard<std::mutex> lock(m_dataMut);
-            if(m_data.empty())
-            {
-                return nullptr;
-            }
             return popPtr();
         }
-        // 等到数据，超时还没有数据时返回
-        bool try_pop(T&value, unsigned int timeout)
+        
+        // 等待数据，超时还没有数据时返回std::nullopt
+        template<typename Rep, typename Period>
+        std::optional<std::shared_ptr<T>> try_pop(std::chrono::duration<Rep, Period> timeout)
         {
             std::unique_lock<std::mutex> lock(m_dataMut);
-            if(m_dataCond.wait_for(lock, std::chrono::milliseconds(timeout), [this]{
-                return m_data.empty() == false || m_destory;
-            }))            
-            {
-                return popValue();
-            }
-            else
-            {
-                return false;
-            }
-        }
-        std::shared_ptr<T> try_pop(unsigned int timeout)
-        {
-            std::unique_lock<std::mutex> lock(m_dataMut);
-            if(m_dataCond.wait_for(lock, std::chrono::milliseconds(timeout), [this]{
-                return m_data.empty() == false || m_destory;
+            if (m_dataCond.wait_for(lock, timeout, [this]{
+                return !m_data.empty() || m_destory;
             }))
             {
                 return popPtr();
             }
             else
             {
-                return nullptr;
+                return std::nullopt;
             }
         }
 
         //若队列中没有数据，则会阻塞，直到队列中有数据或队列被销毁时再返回
-        // 若队列表销毁，此时pop返回false
-        bool pop(T& value)
-        {
-            std::unique_lock<std::mutex> lock(m_dataMut);
-            m_dataCond.wait(lock, [this]{ return !m_data.empty() || m_destory; });
-            return popValue(value);
-        }
-        
-        std::shared_ptr<T> pop()
+        // 若队列表销毁且为空，返回std::nullopt
+        std::optional<std::shared_ptr<T>> pop()
         {
             std::unique_lock<std::mutex> lock(m_dataMut);
             m_dataCond.wait(lock, [this]{ return !m_data.empty() || m_destory; });
             return popPtr();
-        }
-
-        std::unique_ptr<T> popUniquePtr()
-        {
-            std::unique_lock<std::mutex> lock(m_dataMut);
-            m_dataCond.wait(lock, [this]{ return !m_data.empty() || m_destory; });
-            return popUniPtr();
         }
         
         bool empty() const
@@ -127,19 +74,14 @@ namespace furry_toy
             std::lock_guard<std::mutex> lock(m_dataMut);
             return m_data.empty();
         }
-
-    private:
-        inline std::unique_ptr<T> popUniPtr()
+        
+        size_t size() const
         {
-            if(m_data.empty())
-            {
-                return nullptr;
-            }
-            auto res = std::make_unique<T>(std::move(m_data.front()));
-            m_data.pop();
-            return res;
+            std::lock_guard<std::mutex> lock(m_dataMut);
+            return m_data.size();
         }
 
+    private:
         inline std::shared_ptr<T> popPtr()
         {
             if(m_data.empty())
@@ -147,20 +89,8 @@ namespace furry_toy
                 return nullptr;
             }
             std::shared_ptr<T> res = m_data.front();
-            // auto res = std::move(m_data.front());
             m_data.pop();
             return res;
-        }
-
-        inline bool popValue(T& value)
-        {
-            if(m_data.empty())
-            {
-                return false;
-            }
-            value = std::move(*m_data.front());
-            m_data.pop();
-            return true;
         }
 
     private:

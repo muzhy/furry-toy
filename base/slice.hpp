@@ -11,20 +11,10 @@
 
 namespace furry_toy
 {
-    /*********************************************************************
-     * slice 模仿Go中的切片实现的切片
-     * 创建： 可以创建空的切片，也可以使用makeSlice()函数创建切片并指定切片长度
-     * slice目标在于尽可能提供与Go中的slice相同的功能，由于C++本身语法的限制
-     * 部分功能如[:]无法直接通过重载[]实现，改为重载()实现，
-     * 但总体上应该能与Go中的slice表现出一致的行为
-     * ******************************************************************/
     template <typename T>
     class slice
     {
     public:
-        /***************************************************************
-         * 允许创建空的切片
-         * ************************************************************/
         explicit slice()
             : m_data(nullptr), m_beginIndex(0), m_len(0)
         {
@@ -38,7 +28,6 @@ namespace furry_toy
 
         void operator=(slice<T>& otherSlice)
         {
-            // 自赋值情况可以安全的处理
             m_len = otherSlice.m_len;
             m_beginIndex = otherSlice.m_beginIndex;
             m_data = otherSlice.m_data;
