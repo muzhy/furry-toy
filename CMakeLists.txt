@@ -15,7 +15,7 @@ include_directories("${PROJECT_SOURCE_DIR}/network")
 
 # 子文件夹
 add_subdirectory(leetcode)
-# add_subdirectory(test)
+add_subdirectory(test)
 # add_subdirectory(base)
 add_subdirectory(network)
 add_subdirectory(concurrent)
@@ -23,7 +23,7 @@ add_subdirectory(concurrent)
 include(CTest)
 enable_testing()
 
-add_executable(furry_toy main.cpp)
+add_executable(furry_toy main.cpp base/FileWatcher.cpp)
 add_executable(tcp_client tcp_client.cpp)
 
 # 添加链接库

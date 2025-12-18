@@ -11,55 +11,6 @@
 
 namespace furry_toy
 {
-    template <typename T>
-    class TSStack 
-    {
-    private:
-        std::stack<T> m_data;
-        mutable std::mutex m_mut;
-    public:
-        TSStack() : m_data(std::stack<T>()) {}
-        TSStack(const TSStack& other)
-        {
-            std::lock_guard<std::mutex> lock(other.m_mut);
-            m_data = other.m_data;
-        }
-        TSStack& operator=(const TSStack&) = delete;
-        
-        void push(T value)
-        {
-            std::lock_guard<std::mutex> lock(m_mut);
-            m_data.push(value);
-        }
-        void pop(T& value)
-        {
-            std::lock_guard<std::mutex> lock(m_mut);
-            if(m_data.empty())
-            {
-                throw "empty stack";
-            }
-            value = m_data.top();
-            m_data.pop();
-        }
-
-        std::shared_ptr<T> pop()
-        {
-            std::lock_guard<std::mutex> lock(m_mut);
-            if(m_data.empty())
-            {
-                throw "empty stack";
-            }
-            std::shared_ptr<T> const res(std::make_shared<T>(m_data.top()));
-            m_data.pop();
-            return res;
-        }
-        bool empty() const 
-        {
-            std::lock_guard<std::mutex> lock(m_mut);
-            return m_data.empty();
-        }
-    };
-
     /********************************************************
     * TSQueue thread safe queue 线程安全队列 
     * *****************************************************/

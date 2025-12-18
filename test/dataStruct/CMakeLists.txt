@@ -1,8 +1,8 @@
-find_package(GTest REQUIRED)
+# find_package(GTest REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include_directories(${GTEST_INCLUDE_DIRS})
+# include_directories(${GTEST_INCLUDE_DIRS})
 
 include_directories("${PROJECT_SOURCE_DIR}/dataStruct")
 
@@ -14,7 +14,7 @@ file(GLOB dataStruct_test_src
 add_executable(dataStruct_test ${dataStruct_test_src})
 
 target_link_libraries(dataStruct_test
-    ${GTEST_BOTH_LIBRARIES}
+    gtest_main
     pthread 
 )
 
