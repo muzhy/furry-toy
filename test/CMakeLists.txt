@@ -13,9 +13,18 @@ include_directories("${CMAKE_SOURCE_DIR}/base")
 
 message("-- CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 
+# 检查MongoDB
+find_package(mongocxx QUIET)
 
-add_executable(FileWatcher_test FileWatcher_test.cpp ../base/FileWatcher.cpp)
+add_executable(FileWatcher_test FileWatcher_test.cpp)
 
 target_link_libraries(FileWatcher_test gtest_main)
+target_link_libraries(FileWatcher_test base)
+
+add_executable(LocalFileReader_test LocalFileReader_test.cpp)
+
+target_link_libraries(LocalFileReader_test gtest_main)
+target_link_libraries(LocalFileReader_test base)
 
 gtest_discover_tests(FileWatcher_test)
+gtest_discover_tests(LocalFileReader_test)

@@ -13,16 +13,17 @@ include_directories("${PROJECT_SOURCE_DIR}/error")
 
 # 子文件夹
 add_subdirectory(test)
-# add_subdirectory(base)
+add_subdirectory(base)
 add_subdirectory(concurrent)
 
 include(CTest)
 enable_testing()
 
-add_executable(furry_toy main.cpp base/FileWatcher.cpp)
+add_executable(furry_toy main.cpp)
 
 # 添加链接库
 target_link_libraries(furry_toy concurrent)
+target_link_libraries(furry_toy base)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
